@@ -1680,11 +1680,20 @@ function TryOnPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      if (!res.ok) throw new Error('Try-on failed')
-      const data = await res.json()
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        if (data?.error && typeof data.error === 'string') {
+          throw new Error(data.error)
+        }
+        throw new Error('Try-on failed')
+      }
       setResult(data.image)
-    } catch {
-      setError('Generation failed. Please try again.')
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('Generation failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
